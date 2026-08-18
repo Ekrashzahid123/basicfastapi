@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 
 from app.routes.students import router as student_router
 
@@ -12,20 +11,11 @@ app = FastAPI(
 
 @app.middleware("http")
 async def fix_vercel_path(request: Request, call_next):
-    if "debug" in request.query_params:
-        return JSONResponse({
-            "headers": dict(request.headers),
-            "scope_path": request.scope.get("path"),
-        })
+    # Get original path captured by Vercel rewrite parameter
+    captured_path = request.query_params.get("path")
 
-    forwarded_path = (
-        request.headers.get("x-vercel-forwarded-path")
-        or request.headers.get("x-forwarded-uri")
-        or request.headers.get("x-original-uri")
-    )
-
-    if forwarded_path:
-        request.scope["path"] = forwarded_path.split("?")[0]
+    if captured_path:
+        request.scope["path"] = captured_path
     elif request.scope["path"].startswith("/api/index"):
         clean_path = request.scope["path"].replace("/api/index", "", 1)
         request.scope["path"] = clean_path if clean_path != "" else "/"
