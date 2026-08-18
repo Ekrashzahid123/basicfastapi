@@ -11,10 +11,11 @@ app = FastAPI(
 
 @app.middleware("http")
 async def fix_vercel_path(request: Request, call_next):
-    # Get original path captured by Vercel rewrite parameter
     captured_path = request.query_params.get("path")
 
-    if captured_path:
+    if captured_path is not None:
+        if not captured_path.startswith("/"):
+            captured_path = "/" + captured_path
         request.scope["path"] = captured_path
     elif request.scope["path"].startswith("/api/index"):
         clean_path = request.scope["path"].replace("/api/index", "", 1)
