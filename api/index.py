@@ -1,9 +1,15 @@
 from fastapi import Request
+from fastapi.responses import JSONResponse
 from app.main import app
 
 @app.middleware("http")
 async def fix_vercel_path(request: Request, call_next):
-    # Retrieve the original client requested path from Vercel headers
+    if "debug" in request.query_params:
+        return JSONResponse({
+            "headers": dict(request.headers),
+            "scope_path": request.scope.get("path"),
+        })
+
     forwarded_path = (
         request.headers.get("x-vercel-forwarded-path")
         or request.headers.get("x-forwarded-uri")
